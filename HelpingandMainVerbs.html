@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5th Grade Verb Quiz - Deluxe Edition</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --dark: #2c3e50;
+            --light: #f4f7f6;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); display: flex; justify-content: center; padding: 20px; }
+        #quiz-container { background: white; width: 100%; max-width: 600px; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
+        
+        /* Timer Bar Styles */
+        #timer-container { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        #timer-bar { width: 100%; height: 100%; background: var(--primary); transition: width 1s linear; }
+
+        h1 { text-align: center; color: var(--primary); margin-top: 0; }
+        .progress { margin-bottom: 10px; font-size: 0.9rem; color: #666; font-weight: bold; }
+        .question { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; min-height: 3em; }
+        .options-grid { display: grid; gap: 10px; }
+        button.option { padding: 15px; border: 2px solid #ddd; border-radius: 8px; background: white; cursor: pointer; text-align: left; transition: 0.2s; font-size: 1rem; }
+        button.option:hover:not(:disabled) { border-color: var(--primary); background: #f0f7ff; }
+        button.correct { background: var(--success) !important; color: white; border-color: var(--success); }
+        button.wrong { background: var(--error) !important; color: white; border-color: var(--error); }
+        
+        #feedback { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; border-left: 5px solid; }
+        #next-btn { margin-top: 20px; width: 100%; padding: 15px; background: var(--dark); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; display: none; font-weight: bold; }
+        .score-screen { text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container">
+    <div id="timer-container"><div id="timer-bar"></div></div>
+    <h1>📝 Verb Mastery</h1>
+    
+    <div id="game">
+        <div class="progress">Question <span id="q-num">1</span> of 20</div>
+        <div class="question" id="question-text">Loading...</div>
+        <div class="options-grid" id="options"></div>
+        <div id="feedback"></div>
+        <button id="next-btn">Next Question →</button>
+    </div>
+
+    <div id="result" class="score-screen" style="display:none;">
+        <h2>Quiz Complete!</h2>
+        <p>Your final score:</p>
+        <h2 id="final-score" style="font-size: 3rem; color: var(--primary);">0/20</h2>
+        <button onclick="location.reload()" style="padding:15px 30px; cursor:pointer; background: var(--primary); color: white; border: none; border-radius: 8px;">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "In the sentence 'The students are studying for the test,' which word is the helping verb?", options: ["studying", "are", "students", "test"], correct: 1, why: " 'Are' supports the main verb 'studying' to show it's happening now." },
+        { q: "What is the main verb in: 'I have finished my chores early.'", options: ["have", "finished", "chores", "early"], correct: 1, why: " 'Finished' is the primary action being described." },
+        { q: "Identify the helping verb: 'We will visit the museum on Saturday.'", options: ["will", "visit", "museum", "Saturday"], correct: 0, why: " 'Will' helps by showing the future tense." },
+        { q: "Which sentence contains a verb phrase?", options: ["The cat slept.", "She is a singer.", "They are eating lunch.", "Birds fly south."], correct: 2, why: " 'Are eating' is a verb phrase (Helping + Main)." },
+        { q: "In 'I did not see the movie,' which is the helping verb?", options: ["see", "not", "did", "movie"], correct: 2, why: " 'Did' helps the main verb 'see' form a negative." },
+        { q: "Identify the main verb: 'You should listen to your teacher.'", options: ["should", "listen", "teacher", "to"], correct: 1, why: " 'Listen' is the actual action being advised." },
+        { q: "Complete the sentence: 'The team _____ won three games.'", options: ["has", "doing", "is", "will"], correct: 0, why: " 'Has' correctly pairs with the past participle 'won'." },
+        { q: "What is the complete verb phrase in: 'She was laughing'?", options: ["was", "laughing", "was laughing", "at"], correct: 2, why: "A verb phrase includes the helper AND the main verb." },
+        { q: "Which is ALWAYS a helping verb (modal)?", options: ["do", "is", "must", "have"], correct: 2, why: " 'Must' cannot stand alone as the only verb in a sentence." },
+        { q: "Identify the helping verb: 'The flowers might bloom.'", options: ["might", "bloom", "spring", "flowers"], correct: 0, why: " 'Might' shows possibility." },
+        { q: "In 'We have been waiting,' how many helping verbs are there?", options: ["0", "1", "2", "3"], correct: 2, why: "Both 'have' and 'been' are helping 'waiting'." },
+        { q: "Identify the main verb: 'My brother can swim.'", options: ["can", "swim", "brother", "across"], correct: 1, why: " 'Swim' is the physical action." },
+        { q: "Identify the helping verb: 'The teacher does expect us to try.'", options: ["expect", "try", "best", "does"], correct: 3, why: " 'Does' is used here for emphasis." },
+        { q: "Which of the following is NOT a helping verb?", options: ["should", "could", "running", "were"], correct: 2, why: " 'Running' is a main action, not a helper." },
+        { q: "In 'Did you finish?', which is the helping verb?", options: ["Did", "you", "finish", "project"], correct: 0, why: "In questions, the helper often starts the sentence." },
+        { q: "Which uses 'be' as a helping verb?", options: ["have gone", "am singing", "did play", "can jump"], correct: 1, why: " 'Am' is a form of 'be'." },
+        { q: "Find the main verb: 'The snow had melted.'", options: ["had", "melted", "snow", "noon"], correct: 1, why: " 'Melted' is the action that happened." },
+        { q: "What is the helping verb: 'They are going.'", options: ["are", "going", "park", "to"], correct: 0, why: " 'Are' is the assistant verb." },
+        { q: "In 'He is always trying,' what is the helping verb?", options: ["is", "always", "trying", "best"], correct: 0, why: " 'Is' is the helper; 'always' is an interrupter." },
+        { q: "Which sentence has two helping verbs?", options: ["I will go.", "He has been sleeping.", "She is running.", "They were playing."], correct: 1, why: " 'Has' and 'been' are both helping verbs." }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let timeLeft = 15;
+    let timerInterval;
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(freq, type) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function startTimer() {
+        timeLeft = 15;
+        document.getElementById('timer-bar').style.width = '100%';
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer-bar').style.width = (timeLeft / 15 * 100) + '%';
+            if(timeLeft <= 0) {
+                clearInterval(timerInterval);
+                checkAnswer(-1, questions[currentQ].correct, "Time's up! " + questions[currentQ].why);
+            }
+        }, 1000);
+    }
+
+    function loadQuestion() {
+        const data = questions[currentQ];
+        document.getElementById('q-num').innerText = currentQ + 1;
+        document.getElementById('question-text').innerText = data.q;
+        const optionsBox = document.getElementById('options');
+        optionsBox.innerHTML = '';
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+        
+        data.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.classList.add('option');
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index, data.correct, data.why);
+            optionsBox.appendChild(btn);
+        });
+        startTimer();
+    }
+
+    function checkAnswer(index, correct, why) {
+        clearInterval(timerInterval);
+        const buttons = document.querySelectorAll('.option');
+        buttons.forEach(b => b.disabled = true);
+        
+        const feedback = document.getElementById('feedback');
+        if(index === correct) {
+            playSound(600, 'sine');
+            if(index !== -1) buttons[index].classList.add('correct');
+            score++;
+            feedback.innerHTML = `<strong>✅ Correct!</strong> ${why}`;
+            feedback.style.borderColor = var(--success);
+            feedback.style.background = "#e6fffa";
+        } else {
+            playSound(200, 'square');
+            if(index !== -1) buttons[index].classList.add('wrong');
+            buttons[correct].classList.add('correct');
+            feedback.innerHTML = `<strong>❌ Not quite.</strong> ${why}`;
+            feedback.style.borderColor = var(--error);
+            feedback.style.background = "#fff5f5";
+        }
+        feedback.style.display = 'block';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    document.getElementById('next-btn').onclick = () => {
+        currentQ++;
+        if(currentQ < questions.length) {
+            loadQuestion();
+        } else {
+            document.getElementById('game').style.display = 'none';
+            document.getElementById('timer-container').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('final-score').innerText = `${score}/20`;
+        }
+    };
+
+    // Start on click to allow audio context
+    document.addEventListener('click', () => {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }, {once: true});
+
+    loadQuestion();
+</script>
+</body>
+</html>
